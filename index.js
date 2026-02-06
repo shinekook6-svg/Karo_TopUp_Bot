@@ -799,4 +799,4 @@ if (data.startsWith("confirm_buy_")) {
         body: JSON.stringify(body)
     });
       }
-};
+}
