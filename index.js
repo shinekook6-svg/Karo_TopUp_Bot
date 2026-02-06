@@ -773,21 +773,30 @@ if (data.startsWith("confirm_buy_")) {
     return await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   },
     // --- smartReply
-    async smartReply(env, chatId, text, keyboard = null, messageId = null) {
-    if (messageId) {
-      const editUrl = `https://api.telegram.org/bot${env.BOT_TOKEN}/editMessageText`;
-      return await fetch(editUrl, {
+      async smartReply(env, chatId, text, keyboard = null, messageId = null) {
+    const isInline = keyboard && keyboard.inline_keyboard;
+    const url = messageId 
+        ? `https://api.telegram.org/bot${env.BOT_TOKEN}/editMessageText`
+        : `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`;
+
+    const body = {
+        chat_id: chatId,
+        text: text,
+        parse_mode: "HTML"
+    };
+
+    if (messageId) body.message_id = messageId;
+    if (keyboard) body.reply_markup = keyboard;
+
+    // editMessageText သုံးရင် inline keyboard ပဲ ဖြစ်ရမယ်
+    if (messageId && keyboard && !isInline) {
+        delete body.reply_markup; // Admin Menu က keyboard မျိုးဆိုရင် ဖျက်ပေးရတယ်
+    }
+
+    return await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          message_id: messageId,
-          text: text,
-          parse_mode: "HTML",
-          reply_markup: keyboard
-        })
-      });
-    }
-    return this.sendMessage(env, chatId, text, keyboard);
-}
-};
+        body: JSON.stringify(body)
+    });
+      }
+},
